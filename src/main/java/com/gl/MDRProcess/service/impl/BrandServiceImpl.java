@@ -92,6 +92,7 @@ public class BrandServiceImpl {
 	
 	@Transactional
 	public void saveBrands(List<DeviceBrand> brands) {
+//		brandRepository.saveAll(brands);
 		String sql = "insert into dev_brand_name(brand_name, created_on) values(?, CURRENT_TIMESTAMP)";
 		try {
 			for(DeviceBrand brand: brands) {
@@ -103,6 +104,7 @@ public class BrandServiceImpl {
 		    logger.error(ex.getMessage(), ex);
 		} finally {
 			brandEntityManager.clear();
+//			brandEntityManager.close();
 		}
 	}
 	

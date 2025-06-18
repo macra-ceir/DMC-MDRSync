@@ -2,6 +2,7 @@ package com.gl.MDRProcess.model.app;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -31,11 +32,11 @@ public class MobileDeviceRepository {
 	
 	@Column(name="allocation_date", columnDefinition="timestamp DEFAULT NULL")
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime allocationDate;
+	private Date allocationDate;
 	
 	@Column(name="announce_date", columnDefinition="timestamp DEFAULT NULL")
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime announceDate;
+	private Date announceDate;
 	
 	@Column(name="band_detail", length=50, columnDefinition="varchar(50) DEFAULT ''")
 	private String bandDetail = "";
@@ -82,12 +83,12 @@ public class MobileDeviceRepository {
 	@CreationTimestamp
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Column(name="created_on", columnDefinition="timestamp DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime createdOn = LocalDateTime.now();
+	private Date createdOn = new Date();
 	
 	@UpdateTimestamp
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Column(name="modified_on", columnDefinition="timestamp DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime modifiedOn = LocalDateTime.now();
+	private Date modifiedOn = new Date();
 	
 	@Column(name="device_id", length=8, columnDefinition="varchar(8) DEFAULT '0'", unique=true)
 	private String deviceId = "0";
@@ -139,14 +140,14 @@ public class MobileDeviceRepository {
 	
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	@Column(name="launch_date", columnDefinition="timestamp DEFAULT NULL")
-	private LocalDateTime launchDate;
+	private Date launchDate;
 	
 	@Column(name="device_status", length=20, columnDefinition="varchar(20) DEFAULT ''")
 	private String deviceStatus = "";
 	
 	@Column(name="discontinue_date", columnDefinition="timestamp DEFAULT NULL")
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime discontinueDate;
+	private Date discontinueDate;
 	
 	@Column(name="network_technology_gsm", length=1, columnDefinition="int DEFAULT '0'") //2G
 	private Integer networkTechnologyGSM = 0; // Configuration table entry 'Yes', 'No'
@@ -304,6 +305,9 @@ public class MobileDeviceRepository {
 	@Column(name="network_specific_identifier", columnDefinition="int DEFAULT '0'")
 	private Integer networkSpecificIdentifier;
 	
+	@Column(name="is_type_approved", length=1, columnDefinition="int DEFAULT '0'")
+	private Integer isTypeApproved = 0;
+	
 	@Transient
 	private Integer featureId;
 	
@@ -377,7 +381,7 @@ public class MobileDeviceRepository {
 	
 	@Column(name="is_test_imei", length=1, columnDefinition="int DEFAULT '0'")
 	private Integer isTestImei = 0;
-
+	
 	public Integer getId() {
 		return id;
 	}
@@ -386,19 +390,19 @@ public class MobileDeviceRepository {
 		this.id = id;
 	}
 
-	public LocalDateTime getAllocationDate() {
+	public Date getAllocationDate() {
 		return allocationDate;
 	}
 
-	public void setAllocationDate(LocalDateTime allocationDate) {
+	public void setAllocationDate(Date allocationDate) {
 		this.allocationDate = allocationDate;
 	}
 
-	public LocalDateTime getAnnounceDate() {
+	public Date getAnnounceDate() {
 		return announceDate;
 	}
 
-	public void setAnnounceDate(LocalDateTime announceDate) {
+	public void setAnnounceDate(Date announceDate) {
 		this.announceDate = announceDate;
 	}
 
@@ -514,19 +518,19 @@ public class MobileDeviceRepository {
 		this.commsWLAN = commsWLAN;
 	}
 
-	public LocalDateTime getCreatedOn() {
+	public Date getCreatedOn() {
 		return createdOn;
 	}
 
-	public void setCreatedOn(LocalDateTime createdOn) {
+	public void setCreatedOn(Date createdOn) {
 		this.createdOn = createdOn;
 	}
 
-	public LocalDateTime getModifiedOn() {
+	public Date getModifiedOn() {
 		return modifiedOn;
 	}
 
-	public void setModifiedOn(LocalDateTime modifiedOn) {
+	public void setModifiedOn(Date modifiedOn) {
 		this.modifiedOn = modifiedOn;
 	}
 
@@ -658,11 +662,11 @@ public class MobileDeviceRepository {
 		this.osBaseVersion = osBaseVersion;
 	}
 
-	public LocalDateTime getLaunchDate() {
+	public Date getLaunchDate() {
 		return launchDate;
 	}
 
-	public void setLaunchDate(LocalDateTime launchDate) {
+	public void setLaunchDate(Date launchDate) {
 		this.launchDate = launchDate;
 	}
 
@@ -674,11 +678,11 @@ public class MobileDeviceRepository {
 		this.deviceStatus = deviceStatus;
 	}
 
-	public LocalDateTime getDiscontinueDate() {
+	public Date getDiscontinueDate() {
 		return discontinueDate;
 	}
 
-	public void setDiscontinueDate(LocalDateTime discontinueDate) {
+	public void setDiscontinueDate(Date discontinueDate) {
 		this.discontinueDate = discontinueDate;
 	}
 
@@ -1090,6 +1094,23 @@ public class MobileDeviceRepository {
 		this.remark = remark;
 	}
 
+	public Integer getNetworkSpecificIdentifier() {
+		return networkSpecificIdentifier;
+	}
+
+	public void setNetworkSpecificIdentifier(Integer networkSpecificIdentifier) {
+		this.networkSpecificIdentifier = networkSpecificIdentifier;
+	}
+
+	
+	public Integer getIsTypeApproved() {
+		return isTypeApproved;
+	}
+
+	public void setIsTypeApproved(Integer isTypeApproved) {
+		this.isTypeApproved = isTypeApproved;
+	}
+
 	public Integer getFeatureId() {
 		return featureId;
 	}
@@ -1272,14 +1293,6 @@ public class MobileDeviceRepository {
 
 	public void setIsTestImei(Integer isTestImei) {
 		this.isTestImei = isTestImei;
-	}
-	
-	public Integer getNetworkSpecificIdentifier() {
-		return networkSpecificIdentifier;
-	}
-
-	public void setNetworkSpecificIdentifier(Integer networkSpecificIdentifier) {
-		this.networkSpecificIdentifier = networkSpecificIdentifier;
 	}
 
 	@Override

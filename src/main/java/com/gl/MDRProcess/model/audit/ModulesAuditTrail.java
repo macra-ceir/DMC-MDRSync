@@ -1,6 +1,7 @@
 package com.gl.MDRProcess.model.audit;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,12 +26,15 @@ public class ModulesAuditTrail {
 	@CreationTimestamp
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Column(name="created_on", columnDefinition="timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime createdOn = LocalDateTime.now();
+	private Date createdOn =new Date();
+	//private LocalDateTime createdOn = LocalDateTime.now();
+	
 
 	@UpdateTimestamp
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Column(name="modified_on", columnDefinition="timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime modifiedOn = LocalDateTime.now();
+	private Date modifiedOn =new Date();
+	//private LocalDateTime modifiedOn = LocalDateTime.now();
 	
 	@Column(name="execution_time", length=3, columnDefinition="int NOT NULL DEFAULT '0'")
 	private Integer executionTime = 0;
@@ -90,24 +94,41 @@ public class ModulesAuditTrail {
 		this.id = id;
 	}
 
-	public LocalDateTime getCreatedOn() {
+//	public LocalDateTime getCreatedOn() {
+//		return createdOn;
+//	}
+//
+//	public void setCreatedOn(LocalDateTime createdOn) {
+//		this.createdOn = createdOn;
+//	}
+//
+//	public LocalDateTime getModifiedOn() {
+//		return modifiedOn;
+//	}
+//
+//	public void setModifiedOn(LocalDateTime modifiedOn) {
+//		this.modifiedOn = modifiedOn;
+//	}
+
+	
+	public Integer getExecutionTime() {
+		return executionTime;
+	}
+
+	public Date getCreatedOn() {
 		return createdOn;
 	}
 
-	public void setCreatedOn(LocalDateTime createdOn) {
+	public void setCreatedOn(Date createdOn) {
 		this.createdOn = createdOn;
 	}
 
-	public LocalDateTime getModifiedOn() {
+	public Date getModifiedOn() {
 		return modifiedOn;
 	}
 
-	public void setModifiedOn(LocalDateTime modifiedOn) {
+	public void setModifiedOn(Date modifiedOn) {
 		this.modifiedOn = modifiedOn;
-	}
-
-	public Integer getExecutionTime() {
-		return executionTime;
 	}
 
 	public void setExecutionTime(Integer executionTime) {
