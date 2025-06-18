@@ -20,6 +20,8 @@ JpaRepository<SystemConfigListDb, Long>, JpaSpecificationExecutor<SystemConfigLi
 	
 	public List<SystemConfigListDb> findByTag(String tag);
 	
+	//public SystemConfigListDb findByTags(String tags);
+	
 	@Query("SELECT DISTINCT a.tag FROM SystemConfigListDb a")
 	List<String> findDistinctTags();
 	
@@ -28,5 +30,9 @@ JpaRepository<SystemConfigListDb, Long>, JpaSpecificationExecutor<SystemConfigLi
 	List<SystemConfigListDb> findDistinctTagsWithDescription();
 	
 	public SystemConfigListDb getById(long id);
+	
+	
+//	@Query("SELECT DISTINCT a.value FROM app.sys_param a where a.tag='type_approved_enable_flag'")
+//	public String findTagValue();
 	
 }

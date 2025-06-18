@@ -1,6 +1,7 @@
 package com.gl.MDRProcess.model.app;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,7 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 //@Entity
-//@Table(name = "gsma_tac_detail")
+//@Table(name = "gsma_tac_details")
 public class GSMATacDetails {
 //	@Id
 //	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,7 +49,7 @@ public class GSMATacDetails {
 	private String brandName;
 	
 	@Column(name="allocation_date", columnDefinition="timestamp DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime allocationDate;
+	private Date allocationDate;
 	
 	@Column(name="organisation_id", length=25, columnDefinition="varchar(25) DEFAULT ''")
 	private String organizationId;
@@ -100,7 +101,7 @@ public class GSMATacDetails {
 	
 	public GSMATacDetails() {}
 	
-	public GSMATacDetails(String tac, String modelName, String brandName, LocalDateTime allocationDate, 
+	public GSMATacDetails(String tac, String modelName, String brandName, Date allocationDate, 
 			String networkTechnology, String bluetooth, String nfc, String wlan, String deviceType, Integer imeiQuantity,
 			String manufacturer, String marketingName, String oem, String operatingSystem, Integer removableUICC,
 			Integer removableEUICC, Integer nonRemovableUICC, Integer nonRemovableEUICC, Integer simSlot, Integer networkSpecificIdentifier) {
@@ -190,11 +191,13 @@ public class GSMATacDetails {
 		this.brandName = brandName;
 	}
 
-	public LocalDateTime getAllocationDate() {
+	
+
+	public Date getAllocationDate() {
 		return allocationDate;
 	}
 
-	public void setAllocationDate(LocalDateTime allocationDate) {
+	public void setAllocationDate(Date allocationDate) {
 		this.allocationDate = allocationDate;
 	}
 

@@ -3,6 +3,8 @@ package com.gl.MDRProcess.service.impl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,14 +14,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+//import javax.transaction.Transactional;
+
 import com.gl.MDRProcess.configuration.PropertiesReader;
 import com.gl.MDRProcess.model.app.AlertMessages;
 import com.gl.MDRProcess.model.app.DeviceBrand;
@@ -43,6 +51,9 @@ import com.gl.MDRProcess.repo.app.SystemConfigListRepository;
 public class MobileDeviceRepositoryServiceImpl {
 	
 	private static final Logger logger = LogManager.getLogger(MobileDeviceRepositoryServiceImpl.class);
+	
+//	@Autowired
+//	GSMATacDetailsRepository gsmaTacDetailsRepository;
 	
 	@Autowired
 	MobileDeviceRepoRepository mdrRepository;
@@ -70,9 +81,6 @@ public class MobileDeviceRepositoryServiceImpl {
 	
 	@Autowired
 	AlertRepository alertRepository;
-
-	@Autowired
-	AlertService alertService;
 	
 	@Autowired
 	@PersistenceContext//(unitName = "appEntityManagerFactory")
@@ -85,6 +93,7 @@ public class MobileDeviceRepositoryServiceImpl {
 	
 	@Transactional
 	public void insertMDR() {
+		DateTimeFormatter dtf  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		int insertionCount = 0;
 		Pageable pageable  = null;
 		int batchSize   = propertiesReader.batchSize;
@@ -364,9 +373,7 @@ public class MobileDeviceRepositoryServiceImpl {
 	}
 	
 	public void raiseAnAlert(String alertCode, String alertMessage, String alertProcess, int userId) {
-
-		alertService.raiseAnAlert(null, alertCode, alertMessage, alertProcess, userId);
-		/*Process p = null;
+		Process p = null;
 		String path = null;
 		String line = null;
         String response = null;
@@ -383,6 +390,6 @@ public class MobileDeviceRepositoryServiceImpl {
             logger.info("Alert is generated :response " + response);
         } catch (Exception ex) {
             logger.error("Not able to execute Alert mgnt jar ", ex.getLocalizedMessage() + " ::: " + ex.getMessage());
-        }*/
+        }
     }
 }
