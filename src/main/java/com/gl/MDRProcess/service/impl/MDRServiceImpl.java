@@ -309,13 +309,21 @@ public class MDRServiceImpl {
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
-        String query = "select tac, g.model_name, g.brand_name, g.allocation_date, network_technology, bluetooth,"
+        /*String query = "select tac, g.model_name, g.brand_name, g.allocation_date, network_technology, bluetooth,"
                 + "nfc, wlan, g.device_type, g.imei_quantity, g.manufacturer, g.marketing_name, g.oem, operating_system,"
                 + "g.removable_uicc, g.removable_euicc, g.nonremovable_uicc, g.nonremovable_euicc, g.sim_slot, g.network_specific_identifier "
                 + "from gsma_tac_detail as g left join mobile_device_repository as m on tac=device_id where "
                 + "device_id IS NULL and g.device_type in "
                 + "(" + propertiesReader.filterDeviceTypes.stream().map(name -> "'" + name + "'").collect(Collectors.joining(",")) + ")"
-                + " limit " + batchLimit;
+                + " limit " + batchLimit;*/
+        String query = "select gsma_tac_details.tac, gsma_tac_details.model_name, gsma_tac_details.brand_name, gsma_tac_details.allocation_date, network_technology, bluetooth,nfc,"
+                + " wlan, gsma_tac_details.device_type, gsma_tac_details.imei_quantity, gsma_tac_details.manufacturer, gsma_tac_details.marketing_name, gsma_tac_details.oem, operating_system,"
+                + " gsma_tac_details.removable_uicc, gsma_tac_details.removable_euicc, gsma_tac_details.nonremovable_uicc, gsma_tac_details.nonremovable_euicc, gsma_tac_details.sim_slot, gsma_tac_details.network_specific_identifier"
+                + " from app.gsma_tac_details  left join app.mobile_device_repository  on gsma_tac_details.tac=mobile_device_repository.device_id where "
+                + " mobile_device_repository.device_id IS NULL and gsma_tac_details.device_type in "
+                + "("+propertiesReader.filterDeviceTypes.stream().map(name -> "'" + name + "'").collect(Collectors.joining(","))+")"
+                + " FETCH NEXT "+batchLimit+" ROWS ONLY ";
+
         try {
             conn = this.getConnection();
             stmt = conn.createStatement();
@@ -380,12 +388,27 @@ public class MDRServiceImpl {
             conn = this.getConnection();
             pstat = conn.prepareStatement(mdrQuery);
             for (GSMATacDetails tacDetail : tacDetails) {
-                brandName = tacDetail.getBrandName().trim();
+               /* brandName = tacDetail.getBrandName().trim();
                 if (brandName == "" || brandName == "null")
                     brandName = "Not Known";
                 modelName = tacDetail.getModelName().trim();
                 if (modelName == "" || modelName == "null")
+                    modelName = "Not Known";*/
+
+                brandName = tacDetail.getBrandName();
+                if (brandName == null || brandName.trim().isEmpty() || brandName.equalsIgnoreCase("null")) {
+                    brandName = "Not Known";
+                } else {
+                    brandName = brandName.trim();
+                }
+
+                modelName = tacDetail.getModelName();
+                if (modelName == null || modelName.trim().isEmpty() || modelName.equalsIgnoreCase("null")) {
                     modelName = "Not Known";
+                } else {
+                    modelName = modelName.trim();
+                }
+
 
                 deviceIds.add(tacDetail.getTac());
                 pstat.setString(1, tacDetail.getTac());
@@ -434,7 +457,7 @@ public class MDRServiceImpl {
                 if (Objects.nonNull(tacDetail.getMarketingName()) && !tacDetail.getMarketingName().equals("null"))
                     pstat.setString(13, tacDetail.getMarketingName());
 
-                if (tacDetail.getNetworkTechnology().trim().toLowerCase().contains("2g")) {
+               /* if (tacDetail.getNetworkTechnology().trim().toLowerCase().contains("2g")) {
                     pstat.setInt(14, 1);
                 } else {
                     pstat.setInt(14, 0);
@@ -457,7 +480,15 @@ public class MDRServiceImpl {
                     pstat.setInt(17, 1);
                 } else {
                     pstat.setInt(17, 0);
-                }
+                }*/
+
+                String networkTech = tacDetail.getNetworkTechnology();
+                networkTech = (networkTech == null) ? "" : networkTech.trim().toLowerCase();
+
+                pstat.setInt(14, networkTech.contains("2g") ? 1 : 0);
+                pstat.setInt(15, networkTech.contains("3g") ? 1 : 0);
+                pstat.setInt(16, (networkTech.contains("4g") || networkTech.contains("lte")) ? 1 : 0);
+                pstat.setInt(17, networkTech.contains("5g") ? 1 : 0);
 
                 pstat.setString(18, "");
                 if (Objects.nonNull(tacDetail.getOem()) && !tacDetail.getOem().equals("null"))
@@ -758,9 +789,16 @@ public class MDRServiceImpl {
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
-        String query = "SELECT distinct concat(mdr.model_name, ' ', mdr.brand_name) temp, mdr.model_name, mdr.brand_name "
+        /*String query = "SELECT distinct concat(mdr.model_name, ' ', mdr.brand_name) temp, mdr.model_name, mdr.brand_name "
                 + "from mobile_device_repository as mdr LEFT JOIN dev_model_name as m ON mdr.brand_name = m.brand_name AND "
-                + "mdr.model_name = m.model_name WHERE m.brand_name IS NULL AND m.model_name IS NULL and mdr.brand_name !=''";
+                + "mdr.model_name = m.model_name WHERE m.brand_name IS NULL AND m.model_name IS NULL and mdr.brand_name !=''";*/
+
+        String query = "SELECT DISTINCT (mdr.model_name || ' ' || mdr.brand_name) AS temp, " +
+                "mdr.model_name, mdr.brand_name " +
+                "FROM mobile_device_repository mdr " +
+                "LEFT JOIN dev_model_name m ON mdr.brand_name = m.brand_name " +
+                "AND mdr.model_name = m.model_name " +
+                "WHERE m.brand_name IS NULL AND m.model_name IS NULL AND mdr.brand_name IS NOT NULL AND mdr.brand_name != ''";
         try {
             conn = this.getConnection();
             stmt = conn.createStatement();
@@ -790,9 +828,14 @@ public class MDRServiceImpl {
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
-        String query = "SELECT distinct mdr.brand_name from mobile_device_repository as mdr LEFT JOIN dev_brand_name as m "
+        /*String query = "SELECT distinct mdr.brand_name from mobile_device_repository as mdr LEFT JOIN dev_brand_name as m "
                 + "ON mdr.brand_name = m.brand_name WHERE m.brand_name IS NULL AND "
-                + "mdr.brand_name !=''";
+                + "mdr.brand_name !=''";*/
+        String query = "SELECT DISTINCT mdr.brand_name " +
+                "FROM mobile_device_repository mdr " +
+                "LEFT JOIN dev_brand_name m ON UPPER(mdr.brand_name) = UPPER(m.brand_name) " +
+                "WHERE m.brand_name IS NULL AND mdr.brand_name IS NOT NULL AND TRIM(mdr.brand_name) != ''";
+
         try {
             conn = this.getConnection();
             stmt = conn.createStatement();
@@ -850,9 +893,10 @@ public class MDRServiceImpl {
     public void deleteOldBrands() {
         Connection conn = null;
         Statement stmt = null;
-        String query = "delete from dev_brand_name as brand where not exists(select mdr.brand_name "
-                + "from mobile_device_repository as mdr where mdr.brand_name=brand.brand_name)";
-
+        /*String query = "delete from dev_brand_name as brand where not exists(select mdr.brand_name "
+                + "from mobile_device_repository as mdr where mdr.brand_name=brand.brand_name)";*/
+        String query = "DELETE FROM dev_brand_name d WHERE NOT EXISTS " +
+                "(SELECT 1 FROM mobile_device_repository m WHERE m.brand_name = d.brand_name)";
         try {
             conn = this.getConnection();
             stmt = conn.createStatement();
@@ -868,6 +912,7 @@ public class MDRServiceImpl {
                 if (conn != null)
                     conn.close();
             } catch (Exception e) {
+                logger.warn("Error closing resources: " + e.getMessage());
             }
         }
     }
@@ -875,8 +920,10 @@ public class MDRServiceImpl {
     public void deleteOldModels() {
         Connection conn = null;
         Statement stmt = null;
-        String query = "delete from dev_model_name as model where not exists(select mdr.model_name "
-                + "from mobile_device_repository as mdr where mdr.model_name=model.model_name)";
+        /*String query = "delete from dev_model_name as model where not exists(select mdr.model_name "
+                + "from mobile_device_repository as mdr where mdr.model_name=model.model_name)";*/
+        String query = "DELETE FROM dev_model_name d WHERE NOT EXISTS " +
+                "(SELECT 1 FROM mobile_device_repository m WHERE m.model_name = d.model_name)";
 
         try {
             conn = this.getConnection();
@@ -893,6 +940,7 @@ public class MDRServiceImpl {
                 if (conn != null)
                     conn.close();
             } catch (Exception e) {
+                logger.warn("Error closing resources: " + e.getMessage());
             }
         }
     }
