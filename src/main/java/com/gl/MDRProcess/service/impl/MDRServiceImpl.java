@@ -1,16 +1,10 @@
 package com.gl.MDRProcess.service.impl;
 
 import com.gl.MDRProcess.configuration.PropertiesReader;
-import com.gl.MDRProcess.model.app.AlertMessages;
-import com.gl.MDRProcess.model.app.GSMATacDetails;
-import com.gl.MDRProcess.model.app.RuleDb;
-import com.gl.MDRProcess.model.app.SystemConfigListDb;
+import com.gl.MDRProcess.model.app.*;
 import com.gl.MDRProcess.model.audit.ModulesAuditTrail;
 import com.gl.MDRProcess.model.view.ModelBrandView;
-import com.gl.MDRProcess.repo.app.AlertRepository;
-import com.gl.MDRProcess.repo.app.MobileDeviceRepoRepository;
-import com.gl.MDRProcess.repo.app.RuleRepository;
-import com.gl.MDRProcess.repo.app.SystemConfigListRepository;
+import com.gl.MDRProcess.repo.app.*;
 import com.gl.MDRProcess.repo.audit.ModulesAuditTrailRepository;
 import com.gl.MDRProcess.util.Utility;
 import org.apache.logging.log4j.LogManager;
@@ -24,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.*;
@@ -72,6 +67,9 @@ public class MDRServiceImpl {
     ModuleAuditTrailService moduleAuditTrailService;
 
     @Autowired
+    DeviceModelRepository deviceModelRepository;
+
+    @Autowired
     @PersistenceContext//(unitName = "appEntityManagerFactory")
     private EntityManager deviceEntityManager;
 
@@ -93,6 +91,9 @@ public class MDRServiceImpl {
         List<SystemConfigListDb> testIMEIList = null;
         List<Object[]> newDeviceDetails = null;
         List<String> deviceIds = null;
+        List<String> modelList= null;
+
+
 
         if (!moduleAuditTrailService.previousDependentModuleExecuted(localDate, propertiesReader.getDependentFeatureName())) {
             logger.info("localDate Received in previousDependentModule {}" ,localDate);
@@ -117,7 +118,8 @@ public class MDRServiceImpl {
         try {
             logger.info("Recovery Mobile Device Repository History update process is started.");
             long logTime = System.currentTimeMillis();
-            newDeviceDetails = this.retrySavedDevices(deviceIds);
+            newDeviceDetails = this.retrySavedDevices();
+            //logger.info("newDeviceDetails ------------> {}", newDeviceDetails);
             if (newDeviceDetails.size() > 0) {
                 this.saveHistoryData(newDeviceDetails);
             }
@@ -197,11 +199,32 @@ public class MDRServiceImpl {
                 System.exit(0);
 
             }
+            //check received Model if it is type approved or not.
+            Map<String, Integer> modelApprovalMap = new HashMap<>();
+            for (GSMATacDetails tac : tacDetails) {
+                String modelName = tac.getModelName();
+                if (modelName == null || modelName.trim().isEmpty() || modelName.equalsIgnoreCase("null")) {
+                    modelName = "Not Known";
+                }
+
+                // Avoid duplicate queries
+                if (!modelApprovalMap.containsKey(modelName)) {
+                    DeviceModel model = isModelTypeApproved(modelName);
+                    if (model != null && model.getIsTypeApproved() != null) {
+                        modelApprovalMap.put(modelName, model.getIsTypeApproved());  // 0 or 1
+                    } else {
+                        modelApprovalMap.put(modelName, 0); // Default
+                    }
+                }
+            }
+
+
             logger.info("Records reading done, total time:{" + String.valueOf(System.currentTimeMillis() - logTime) + "}");
             while (tacDetails.size() > 0) {
                 logger.info("Record processing started.");
                 logTime = System.currentTimeMillis();
-                deviceIds = processDeviceDataAndSave(tacDetails, userId, testIMEIList, isTypeApprovedValues);
+                //deviceIds = processDeviceDataAndSave(tacDetails, userId, testIMEIList, isTypeApprovedValues);
+                deviceIds = processDeviceDataAndSave(tacDetails, userId, testIMEIList, modelApprovalMap);
                 if (failFalg) {
                     modulesAuditTrail.setStatusCode(501);
                     modulesAuditTrail.setStatus("Failed");
@@ -372,7 +395,7 @@ public class MDRServiceImpl {
     }
 
     private List<String> processDeviceDataAndSave(List<GSMATacDetails> tacDetails, Integer userId,
-                                                  List<SystemConfigListDb> testIMEIList, int isTypeApprovedValues) {
+                                                  List<SystemConfigListDb> testIMEIList, Map<String, Integer> modelApprovalMap) {
         List<String> deviceIds = new ArrayList<String>();
         String brandName = null;
         String modelName = null;
@@ -525,7 +548,10 @@ public class MDRServiceImpl {
                 if (Objects.nonNull(tacDetail.getNetworkSpecificIdentifier()))
                     pstat.setInt(29, tacDetail.getNetworkSpecificIdentifier());
 
-                if (isTypeApprovedValues == 1) {
+                int isApproved = modelApprovalMap.getOrDefault(modelName, 0);  // 1 or 0
+                pstat.setInt(30, isApproved);
+
+                if (isApproved  == 1) {
                     pstat.setInt(30, 1);
                     pstat.setString(31, "");
                     pstat.setString(32, "");
@@ -571,37 +597,37 @@ public class MDRServiceImpl {
             pstat = conn.prepareStatement(mdrQuery);
             for (Object[] deviceDetail : deviceDetails) {
                 pstat.setString(1, (String) deviceDetail[0]);
-                pstat.setInt(2, (int) deviceDetail[1]);
+                pstat.setInt(2, ((BigDecimal) deviceDetail[1]).intValue());
                 pstat.setString(3, (String) deviceDetail[2]);
                 pstat.setString(4, (String) deviceDetail[3]);
                 pstat.setObject(5, deviceDetail[4]);
                 pstat.setString(6, (String) deviceDetail[5]);
                 pstat.setString(7, (String) deviceDetail[6]);
-                pstat.setInt(8, (int) deviceDetail[7]);
+                pstat.setInt(8, ((BigDecimal) deviceDetail[7]).intValue());
                 pstat.setString(9, (String) deviceDetail[8]);
                 pstat.setString(10, (String) deviceDetail[9]);
-                pstat.setInt(11, (int) deviceDetail[10]);
+                pstat.setInt(11, ((BigDecimal) deviceDetail[10]).intValue());
                 pstat.setString(12, (String) deviceDetail[11]);
                 pstat.setString(13, (String) deviceDetail[12]);
-                pstat.setInt(14, (int) deviceDetail[13]);
-                pstat.setInt(15, (int) deviceDetail[14]);
-                pstat.setInt(16, (int) deviceDetail[15]);
-                pstat.setInt(17, (int) deviceDetail[16]);
+                pstat.setInt(14, ((BigDecimal) deviceDetail[13]).intValue());
+                pstat.setInt(15, ((BigDecimal) deviceDetail[14]).intValue());
+                pstat.setInt(16, ((BigDecimal) deviceDetail[15]).intValue());
+                pstat.setInt(17, ((BigDecimal) deviceDetail[16]).intValue());
                 pstat.setString(18, (String) deviceDetail[17]);
                 pstat.setString(19, (String) deviceDetail[18]);
-                pstat.setInt(20, (int) deviceDetail[19]);
-                pstat.setInt(21, (int) deviceDetail[20]);
-                pstat.setInt(22, (int) deviceDetail[21]);
-                pstat.setInt(23, (int) deviceDetail[22]);
-                pstat.setInt(24, (int) deviceDetail[23]);
-                pstat.setInt(25, (int) deviceDetail[24]);
-                pstat.setInt(26, (int) deviceDetail[25]);
+                pstat.setInt(20, ((BigDecimal) deviceDetail[19]).intValue());
+                pstat.setInt(21, ((BigDecimal) deviceDetail[20]).intValue());
+                pstat.setInt(22, ((BigDecimal) deviceDetail[21]).intValue());
+                pstat.setInt(23, ((BigDecimal) deviceDetail[22]).intValue());
+                pstat.setInt(24, ((BigDecimal) deviceDetail[23]).intValue());
+                pstat.setInt(25, ((BigDecimal) deviceDetail[24]).intValue());
+                pstat.setInt(26, ((BigDecimal) deviceDetail[25]).intValue());
                 pstat.setObject(27, deviceDetail[26]);
                 pstat.setObject(28, deviceDetail[27]);
                 pstat.setObject(29, LocalDateTime.now());
-                pstat.setInt(30, (int) deviceDetail[28]);
-                pstat.setInt(31, (int) deviceDetail[29]);
-                pstat.setInt(32, (int) deviceDetail[30]);
+                pstat.setInt(30, ((BigDecimal) deviceDetail[28]).intValue());
+                pstat.setInt(31, ((BigDecimal) deviceDetail[29]).intValue());
+                pstat.setInt(32, ((BigDecimal) deviceDetail[13]).intValue());
                 pstat.setString(33, (String) deviceDetail[31]);
                 pstat.setString(34, (String) deviceDetail[32]);
                 pstat.setObject(35, deviceDetail[33]);
@@ -666,7 +692,7 @@ public class MDRServiceImpl {
         return deviceDetails;
     }
 
-    private List<Object[]> retrySavedDevices(List<String> deviceIds) {
+    private List<Object[]> retrySavedDevices() {
         List<Object[]> deviceDetails = new ArrayList<Object[]>();
         Object[] data = null;
         Connection conn = null;
@@ -945,6 +971,16 @@ public class MDRServiceImpl {
         }
     }
 
+    public DeviceModel isModelTypeApproved(String modelName) {
+        try {
+            logger.info("Fetching approval status for model: {}", modelName);
+            return deviceModelRepository.findByModelName(modelName);
+        } catch (Exception e) {
+            logger.error("Error fetching model approval status: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
 
     public void raiseAnAlert(String alertCode, String alertMessage, String alertProcess, int userId) {
         alertService.raiseAnAlert(null, alertCode, alertMessage, alertProcess, userId);
@@ -978,3 +1014,4 @@ public class MDRServiceImpl {
         }
     }
 }
+

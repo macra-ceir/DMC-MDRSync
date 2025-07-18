@@ -22,4 +22,6 @@ public interface DeviceModelRepository extends JpaRepository<DeviceModel, Intege
 			+ " from MobileDeviceRepository as mdr where mdr.modelName=model.modelName)")
 	public List<DeviceModel> getOldModels();
 
+	public DeviceModel findByModelName(String modelName);
+
 }

@@ -34,6 +34,9 @@ public class DeviceModel {
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	@Column(name="created_on", columnDefinition="timestamp DEFAULT CURRENT_TIMESTAMP")
 	private LocalDateTime createdOn = LocalDateTime.now();
+
+	@Column(name="is_type_approved", columnDefinition="int DEFAULT '0'")
+	private Integer isTypeApproved = 0;
 	
 	public DeviceModel() {}
 	
@@ -83,10 +86,23 @@ public class DeviceModel {
 		this.createdOn = createdOn;
 	}
 
+	public Integer getIsTypeApproved() {
+		return isTypeApproved;
+	}
+
+	public void setIsTypeApproved(Integer isTypeApproved) {
+		this.isTypeApproved = isTypeApproved;
+	}
+
 	@Override
 	public String toString() {
-		return "DeviceModel [id=" + id + ", brandName=" + brandName + ", brandNameId=" + brandNameId + ", modelName="
-				+ modelName + ", createdOn=" + createdOn + "]";
+		return "DeviceModel{" +
+				"id=" + id +
+				", brandName='" + brandName + '\'' +
+				", brandNameId=" + brandNameId +
+				", modelName='" + modelName + '\'' +
+				", createdOn=" + createdOn +
+				", isTypeApproved=" + isTypeApproved +
+				'}';
 	}
-	
 }
